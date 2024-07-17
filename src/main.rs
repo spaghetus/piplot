@@ -1,21 +1,25 @@
-use std::{
-    cmp::Ordering,
-    collections::{HashMap, HashSet},
-    io::{stdin, BufReader, Write},
-    path::{Path, PathBuf},
-    time::Duration,
-};
-
+#![warn(clippy::pedantic)]
+#![allow(
+    clippy::cast_lossless,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 use clap::Parser;
 use crossterm::{
     cursor::MoveTo,
     style::{Color, Print, SetForegroundColor},
-    terminal::{
-        Clear, ClearType, EnterAlternateScreen, LeaveAlternateScreen, ScrollDown, ScrollUp,
-    },
+    terminal::{Clear, ClearType, EnterAlternateScreen, LeaveAlternateScreen, ScrollUp},
     QueueableCommand,
 };
 use itertools::Itertools;
+use std::{
+    cmp::Ordering,
+    collections::HashMap,
+    io::{BufReader, Write},
+    path::PathBuf,
+    string::ToString,
+    time::Duration,
+};
 
 #[derive(Parser)]
 struct Args {
@@ -35,10 +39,7 @@ struct Args {
 
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
-    let wait = args
-        .wait
-        .map(Duration::from_secs_f64)
-        .unwrap_or(Duration::ZERO);
+    let wait = args.wait.map_or(Duration::ZERO, Duration::from_secs_f64);
     ctrlc::set_handler(|| {
         let mut stdout = std::io::stdout();
         stdout.queue(LeaveAlternateScreen).unwrap();
@@ -63,7 +64,7 @@ fn main() -> anyhow::Result<()> {
                 .headers()
                 .unwrap()
                 .iter()
-                .map(|h| h.to_string())
+                .map(ToString::to_string)
                 .collect_vec();
             reader.records().flatten().for_each(|r| {
                 let row = r
@@ -84,7 +85,6 @@ fn main() -> anyhow::Result<()> {
     loop {
         let mut stdout = std::io::stdout();
         let (width, height) = crossterm::terminal::size()?;
-        let (width, height) = (width as f64, height as f64);
         let values: HashMap<String, f64> = recv_line
             .recv()?
             .into_iter()
@@ -92,7 +92,7 @@ fn main() -> anyhow::Result<()> {
             .collect();
 
         stdout.queue(ScrollUp(1))?;
-        stdout.queue(MoveTo(0, height as u16 - (values.len() as u16 + 1)))?;
+        stdout.queue(MoveTo(0, height - (values.len() as u16 + 1)))?;
         stdout.queue(Clear(ClearType::CurrentLine))?;
         for (i, (name, value)) in values
             .iter()
@@ -100,13 +100,13 @@ fn main() -> anyhow::Result<()> {
             .enumerate()
         {
             let old_position = (old_values.get(name).unwrap() - args.min) / (args.max - args.min);
-            let old_position = (old_position * (width - 1.0)) as u16;
+            let old_position = (old_position * (width as f64 - 1.0)) as u16;
             let position = (value - args.min) / (args.max - args.min);
-            let position = (position * (width - 1.0)) as u16;
+            let position = (position * (width as f64 - 1.0)) as u16;
             let ordering = position.cmp(&old_position);
             stdout.queue(MoveTo(
                 position.min(old_position),
-                height as u16 - (values.len() as u16 + 1),
+                height - (values.len() as u16 + 1),
             ))?;
             stdout.queue(SetForegroundColor(Color::AnsiValue(i as u8)))?;
             stdout.queue(Print(match ordering {
@@ -120,12 +120,12 @@ fn main() -> anyhow::Result<()> {
             }))?;
             let label = format!("{name}: {value}");
             stdout.queue(MoveTo(
-                ((position + old_position) / 2).min(width as u16 - label.len() as u16),
-                height as u16 - (values.len() - i) as u16,
+                ((position + old_position) / 2).min(width - label.len() as u16),
+                height - (values.len() - i) as u16,
             ))?;
             stdout.queue(Clear(ClearType::CurrentLine))?;
             stdout.queue(Print(label))?;
-            stdout.queue(MoveTo(0, height as u16 - 1))?;
+            stdout.queue(MoveTo(0, height - 1))?;
         }
 
         old_values = values;
