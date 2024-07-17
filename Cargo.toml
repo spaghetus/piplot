@@ -1,0 +1,12 @@
+[package]
+name = "piplot"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.86"
+clap = { version = "4.5.9", features = ["derive"] }
+crossterm = "0.27.0"
+csv = "1.3.0"
+ctrlc = "3.4.4"
+itertools = "0.13.0"

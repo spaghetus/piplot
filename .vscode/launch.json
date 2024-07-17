@@ -1,0 +1,68 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'piplot'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=piplot",
+                    "--package=piplot"
+                ],
+                "filter": {
+                    "name": "piplot",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "functions.csv",
+                "-w0.1",
+                "-m-1.5",
+                "-M1.5"
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'piplot'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=piplot",
+                    "--package=piplot"
+                ],
+                "filter": {
+                    "name": "piplot",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug library tests",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--package=piplot"
+                ],
+                "filter": {
+                    "name": "piplot",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
